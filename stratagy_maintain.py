@@ -106,6 +106,33 @@ class StrategyMaintainer:
             self.instrument_timeframe_map[instrument][timeframe] = (strategy_name, parameters)
             print(f"Strategy '{strategy_name}' added for {instrument} with timeframe {timeframe}.")
 
+    def stop_strategy(self, instrument: str, timeframe: str):
+        """
+        Stops a specific strategy for the given instrument and timeframe.
+
+        :param instrument: The instrument name.
+        :param timeframe: The timeframe (e.g., "5m").
+        """
+        with self.lock:
+            if instrument in self.instrument_timeframe_map and \
+                    timeframe in self.instrument_timeframe_map[instrument]:
+                del self.instrument_timeframe_map[instrument][timeframe]
+                print(f"Stopped strategy for {instrument} with timeframe {timeframe}.")
+                # Optionally clear the DataFrame for this timeframe
+                if instrument in self.dataframes and timeframe in self.dataframes[instrument]:
+                    del self.dataframes[instrument][timeframe]
+            else:
+                print(f"No strategy found for {instrument} with timeframe {timeframe}.")
+
+    def stop_all_strategies(self):
+        """
+        Stops all strategies for all instruments and timeframes.
+        """
+        with self.lock:
+            self.instrument_timeframe_map.clear()
+            self.dataframes.clear()
+            print("Stopped all strategies for all instruments and timeframes.")
+            
     def update_dataframes(self, instrument: str, tick_data: dict):
         """
         Updates the dataframes for all timeframes associated with an instrument using new tick data.
@@ -176,6 +203,21 @@ class StrategyMaintainer:
                         print(f"Executing strategy on {instrument} with timeframe {timeframe} using parameters: {parameters}")
                         result = strategy_function(df_without_last_row, **parameters)
                         print(result)
+                        orderparams = {
+                            "variety": "NORMAL",
+                            "tradingsymbol": "SBIN-EQ",
+                            "symboltoken": "3045",
+                            "transactiontype": "BUY",
+                            "exchange": "NSE",
+                            "ordertype": "MARKET",
+                            "producttype": "INTRADAY",
+                            "duration": "DAY",
+                            "squareoff": "0",
+                            "stoploss": "0",
+                            "quantity": "10000"
+                        }
+                        orderId=self.smart_api.placeOrder(orderparams)
+                        print("The order id is: {}".format(orderId))
                     except ModuleNotFoundError:
                         print(f"Error: Module 'strategy' not found.")
                     except AttributeError:

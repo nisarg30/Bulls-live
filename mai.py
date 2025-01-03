@@ -38,7 +38,7 @@ async def main():
     websocket_manager.executor = executor
     time.sleep(5)
     # Subscribe to an instrument
-    instrument = "99926000"
+    instrument = "3045"
     exchange = 1
     executor.submit(asyncio.run, websocket_manager.subscribe_to_instrument(instrument, exchange)) 
     
@@ -52,6 +52,17 @@ async def main():
     }
     strategy_maintainer.add_strategy(instrument, timeframe, strategy_name, parameters)
 
+    time.sleep(60)
+
+    strategy_maintainer.stop_all_strategies()
+
+    time.sleep(2)
+
+    strategy_maintainer.add_strategy(instrument, timeframe, strategy_name, parameters)
+
+    time.sleep(10)
+
+    strategy_maintainer.stop_strategy(instrument, timeframe)
     # Keep the WebSocket running
     print("WebSocket is set up, instrument subscribed, and strategy added.")
     print("Press Ctrl+C to exit.")
